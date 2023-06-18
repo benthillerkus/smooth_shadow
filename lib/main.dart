@@ -159,7 +159,7 @@ class MainApp extends HookWidget {
                 style: TextStyle(fontWeight: FontWeight.w500),
               ),
               Anchor(
-                href: Uri.https("github.com", "benthillerkus/smooth-shadow"),
+                href: Uri.https("github.com", "benthillerkus/smooth_shadow"),
                 text: "Check out the source code",
               )
             ],
