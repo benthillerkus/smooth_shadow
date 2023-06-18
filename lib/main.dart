@@ -73,7 +73,7 @@ class MainApp extends HookWidget {
     final spread = useState(0);
 
     final configuration = [
-      for (int i = 0; i <= layers.value; i++)
+      for (int i = 1; i <= layers.value; i++)
         () {
           final progress = layers.value == 0 ? 1.0 : i / layers.value;
           return BoxShadow(
