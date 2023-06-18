@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:smooth_shadow/extensions.dart';
@@ -49,7 +51,13 @@ class Slider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _SliderPainter(),
+      painter: _SliderPainter(
+          progress: switch (state) {
+        Continuous(value: final value, min: final min, max: final max) =>
+          value.ratio(min, max),
+        Discrete(value: final value, min: final min, max: final max) =>
+          value.ratio(min, max),
+      }),
       child: LayoutBuilder(builder: (context, constraints) {
         return HookBuilder(builder: (context) {
           final isDragging = useState(false);
@@ -67,7 +75,7 @@ class Slider extends StatelessWidget {
               isDragging.value = false;
             },
             child: FocusableActionDetector(
-              mouseCursor: SystemMouseCursors.precise,
+              mouseCursor: SystemMouseCursors.click,
               child: AnimatedAlign(
                 duration: isDragging.value
                     ? const Duration()
@@ -99,18 +107,21 @@ class Slider extends StatelessWidget {
                         ),
                     },
                     0),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                      color: colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: const [
-                        BoxShadow(
-                            offset: Offset(0, 2),
-                            blurRadius: 6,
-                            color: Color.fromRGBO(0, 0, 0, 0.3)),
-                      ]),
-                  child: const SizedBox.square(
-                    dimension: 20,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.grab,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                        color: colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: const [
+                          BoxShadow(
+                              offset: Offset(0, 2),
+                              blurRadius: 6,
+                              color: Color.fromRGBO(0, 0, 0, 0.3)),
+                        ]),
+                    child: const SizedBox.square(
+                      dimension: 20,
+                    ),
                   ),
                 ),
               ),
@@ -123,18 +134,29 @@ class Slider extends StatelessWidget {
 }
 
 class _SliderPainter extends CustomPainter {
+  final double progress;
+
+  _SliderPainter({this.progress = 0.5});
+
   @override
   void paint(Canvas canvas, Size size) {
+    final start = size.centerLeft(Offset.zero).translate(10, 0);
+    final end = size.centerRight(Offset.zero).translate(-10, 0);
     canvas.drawLine(
-      size.centerLeft(Offset.zero).translate(10, 0),
-      size.centerRight(Offset.zero).translate(-10, 0),
+      start,
+      end,
       Paint()
-        ..color = colors.link
+        ..shader = ui.Gradient.linear(
+            start,
+            end,
+            [colors.link, colors.link, colors.light, colors.light],
+            [0.0, progress, progress + 0.001, 1.0])
         ..strokeWidth = 5
         ..strokeCap = StrokeCap.round,
     );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(_SliderPainter oldDelegate) =>
+      progress != oldDelegate.progress;
 }

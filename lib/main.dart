@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_shadow/controls/controls.dart';
-import 'package:smooth_shadow/controls/direction.dart';
 import 'package:smooth_shadow/controls/slider.dart';
 import 'package:smooth_shadow/extensions.dart';
 import 'package:smooth_shadow/link.dart';
@@ -17,6 +16,7 @@ const colors = (
   link: Color.fromARGB(255, 49, 140, 252),
   surface: Color.fromARGB(255, 223, 230, 238),
   surfaceText: Color.fromARGB(255, 49, 63, 78),
+  light: Color.fromARGB(255, 210, 220, 233),
   white: Color(0xFFFFFFFF),
 );
 
@@ -67,17 +67,24 @@ class MainApp extends HookWidget {
   Widget build(BuildContext context) {
     final layers = useState(6);
     final finalTransparency = useState(0.07);
+    final reverseAlpha = useState(false);
     final finalOffset = useState(const Offset(100, 100));
     final finalBlur = useState(80);
     final spread = useState(0);
 
     final configuration = [
-      for (int i = 0; i < layers.value; i++)
+      for (int i = 0; i <= layers.value; i++)
         () {
-          final progress = i / (layers.value - 1);
+          final progress = layers.value == 0 ? 1.0 : i / layers.value;
           return BoxShadow(
             offset: finalOffset.value.scale(progress, progress),
-            color: Color.fromRGBO(0, 0, 0, progress * finalTransparency.value),
+            color: Color.fromRGBO(
+                0,
+                0,
+                0,
+                reverseAlpha.value
+                    ? (1 - progress) * finalTransparency.value
+                    : progress * finalTransparency.value),
             blurRadius: progress * finalBlur.value,
             spreadRadius: spread.value.toDouble(),
           );
@@ -93,7 +100,7 @@ class MainApp extends HookWidget {
             alignment: Alignment(
                 constraints.biggest.width.map(
                   inMin: 800,
-                  inMax: 1600,
+                  inMax: 1900,
                   outMin: -1,
                   outMax: 0,
                 ),
@@ -119,7 +126,7 @@ class MainApp extends HookWidget {
                     ),
                     TextSpan(
                       children: [
-                        const TextSpan(text: "[\n"),
+                        const TextSpan(text: "const <BoxShadow>[\n"),
                         for (final shadow in configuration)
                           TextSpan(
                               text:
@@ -195,25 +202,52 @@ class MainApp extends HookWidget {
                         onChanged: (value) => finalTransparency.value = value,
                       ),
                     ),
+                    GestureDetector(
+                      onTap: () => reverseAlpha.value = !reverseAlpha.value,
+                      child: Wrap(
+                        spacing: 5,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          FocusableActionDetector(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: reverseAlpha.value
+                                    ? colors.link
+                                    : colors.white,
+                                borderRadius: BorderRadius.circular(3.0),
+                                border: Border.all(
+                                  color: colors.surfaceText,
+                                ),
+                              ),
+                              child: const SizedBox.square(
+                                dimension: 15,
+                              ),
+                            ),
+                          ),
+                          const Text("Reverse alpha")
+                        ],
+                      ),
+                    )
                   ]),
                   ControlBox(children: [
                     LabeledSlider(
-                      label: "Final distance",
+                      label: "Final horizontal distance",
                       unit: "px",
                       state: Continuous(
-                        finalOffset.value.distance,
+                        finalOffset.value.dx,
                         max: 500,
                         onChanged: (value) => finalOffset.value =
-                            Offset.fromDirection(
-                                finalOffset.value.direction, value),
+                            Offset(value, finalOffset.value.dy),
                       ),
                     ),
-                    Center(
-                      child: DirectionControl(
-                        value: Offset.fromDirection(finalOffset.value.direction),
+                    LabeledSlider(
+                      label: "Final vertical distance",
+                      unit: "px",
+                      state: Continuous(
+                        finalOffset.value.dy,
+                        max: 500,
                         onChanged: (value) => finalOffset.value =
-                            Offset.fromDirection(
-                                value.direction, finalOffset.value.distance),
+                            Offset(finalOffset.value.dx, value),
                       ),
                     ),
                   ]),

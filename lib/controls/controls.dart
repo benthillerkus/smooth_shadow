@@ -25,9 +25,10 @@ class ControlBox extends StatelessWidget {
             children: children.length == 1
                 ? children
                 : [
-                    for (final child in children)
+                    children.first,
+                    for (final child in children.skip(1))
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
+                        padding: const EdgeInsets.only(top: 20),
                         child: child,
                       )
                   ],
