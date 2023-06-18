@@ -39,7 +39,7 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Build for Web
-        run: 'flutter build web --base-href /smooth_shadow/ --web-renderer canvaskit'
+        run: 'flutter build web --base-href /smooth_shadow/ --web-renderer html'
       - run: 'cp build/web/index.html build/web/404.html'
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
