@@ -3,7 +3,11 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:smooth_shadow/main.dart';
 
 class CurveEditor extends StatelessWidget {
-  const CurveEditor({super.key, required this.curve, required this.onChanged});
+  const CurveEditor({
+    super.key,
+    required this.curve,
+    required this.onChanged,
+  });
 
   final Cubic curve;
   final ValueChanged<Cubic> onChanged;

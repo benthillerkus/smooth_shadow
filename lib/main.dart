@@ -74,7 +74,9 @@ class MainApp extends HookWidget {
     final transparencyCurve = useState(const Cubic(0.1, 0.5, 0.9, 0.5));
     final reverseAlpha = useState(false);
     final finalOffset = useState(const Offset(100, 100));
+    final distanceCurve = useState(const Cubic(0.7, 0.1, 0.9, 0.3));
     final finalBlur = useState(80);
+    final blurCurve = useState(const Cubic(0.7, 0.1, 0.9, 0.3));
     final spread = useState(0);
 
     final configuration = [
@@ -82,7 +84,7 @@ class MainApp extends HookWidget {
         () {
           final progress = layers.value == 0 ? 1.0 : i / layers.value;
           return BoxShadow(
-            offset: finalOffset.value.scale(progress, progress),
+            offset: finalOffset.value * distanceCurve.value.transform(progress),
             color: Color.fromRGBO(
               0,
               0,
@@ -92,7 +94,7 @@ class MainApp extends HookWidget {
                       : progress) *
                   finalTransparency.value,
             ),
-            blurRadius: progress * finalBlur.value,
+            blurRadius: blurCurve.value.transform(progress) * finalBlur.value,
             spreadRadius: spread.value.toDouble(),
           );
         }()
@@ -285,6 +287,49 @@ class MainApp extends HookWidget {
                             Offset(finalOffset.value.dx, value),
                       ),
                     ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.white,
+                      ),
+                      child: SizedBox(
+                        height: 100,
+                        child: Stack(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 5, horizontal: 3),
+                              child: Row(
+                                children: [
+                                  for (int i = 1; i <= layers.value; i++)
+                                    Expanded(
+                                      flex: (distanceCurve.value
+                                                  .transform(i / layers.value) *
+                                              1000)
+                                          .toInt(),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 1),
+                                        child: DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            color: colors.light,
+                                            borderRadius:
+                                                BorderRadius.circular(3.0),
+                                          ),
+                                          child: const SizedBox.expand(),
+                                        ),
+                                      ),
+                                    )
+                                ],
+                              ),
+                            ),
+                            CurveEditor(
+                              curve: distanceCurve.value,
+                              onChanged: (value) => distanceCurve.value = value,
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
                   ]),
                   ControlBox(children: [
                     LabeledSlider(
@@ -294,6 +339,50 @@ class MainApp extends HookWidget {
                         finalBlur.value,
                         max: 500,
                         onChanged: (value) => finalBlur.value = value,
+                      ),
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.white,
+                      ),
+                      child: SizedBox(
+                        height: 100,
+                        child: Stack(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 5, horizontal: 3),
+                              child: LayoutBuilder(
+                                  builder: (context, constraints) {
+                                return Row(
+                                  children: [
+                                    for (int i = 1; i <= layers.value; i++)
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 1),
+                                          child: DecoratedBox(
+                                            decoration: BoxDecoration(
+                                              color: colors.light,
+                                            ),
+                                            child: SizedBox(
+                                              height: blurCurve.value.transform(
+                                                      i / layers.value) *
+                                                  constraints.maxHeight,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                  ],
+                                );
+                              }),
+                            ),
+                            CurveEditor(
+                              curve: blurCurve.value,
+                              onChanged: (value) => blurCurve.value = value,
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ]),
