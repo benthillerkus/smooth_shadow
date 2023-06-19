@@ -1,5 +1,5 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart' as material;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_shadow/controls/checkbox.dart';
@@ -23,6 +23,12 @@ const colors = (
   accent: Color.fromARGB(255, 241, 40, 160),
   white: Color(0xFFFFFFFF),
 );
+
+const codeObject =
+    TextStyle(color: material.Color.fromARGB(255, 179, 162, 132));
+const codeMethod =
+    TextStyle(color: material.Color.fromARGB(255, 139, 163, 146));
+const codeClutter = TextStyle(color: material.Color.fromARGB(45, 0, 0, 0));
 
 class WirsingApp extends StatelessWidget {
   const WirsingApp({super.key, required this.child});
@@ -136,20 +142,88 @@ class MainApp extends HookWidget {
                     ),
                     TextSpan(
                       children: [
-                        const TextSpan(text: "const <BoxShadow>[\n"),
+                        const TextSpan(text: "const"),
+                        const TextSpan(text: " <", style: codeClutter),
+                        const TextSpan(text: "BoxShadow", style: codeObject),
+                        const TextSpan(text: ">[\n", style: codeClutter),
                         for (final shadow in configuration)
                           TextSpan(
-                              text:
-                                  """  BoxShadow(${shadow.offset == Offset.zero ? "" : """
-
-    offset: Offset(${shadow.offset.dx.humanReadable}, ${shadow.offset.dy.humanReadable}),"""}
-    color: Color.fromRGBO(0, 0, 0, ${shadow.color.opacity.humanReadable}),
-    blurRadius: ${shadow.blurRadius.humanReadable},${shadow.spreadRadius == 0.0 ? "" : """
-
-    spreadRadius: ${shadow.spreadRadius.humanReadable},"""}
-  ),
-"""),
-                        const TextSpan(text: "]"),
+                            children: [
+                              const TextSpan(text: "  "),
+                              const TextSpan(
+                                  text: "BoxShadow", style: codeObject),
+                              const TextSpan(text: "(\n", style: codeClutter),
+                              shadow.offset == Offset.zero
+                                  ? const TextSpan()
+                                  : TextSpan(
+                                      children: [
+                                        const TextSpan(text: "    "),
+                                        const TextSpan(text: "offset"),
+                                        const TextSpan(
+                                            text: ": ", style: codeClutter),
+                                        const TextSpan(
+                                            text: "Offset", style: codeObject),
+                                        const TextSpan(
+                                            text: "(", style: codeClutter),
+                                        TextSpan(
+                                          text: shadow.offset.dx.humanReadable,
+                                          style: TextStyle(color: colors.link),
+                                        ),
+                                        const TextSpan(
+                                            text: ", ", style: codeClutter),
+                                        TextSpan(
+                                          text: shadow.offset.dy.humanReadable,
+                                          style: TextStyle(color: colors.link),
+                                        ),
+                                        const TextSpan(
+                                            text: "),\n", style: codeClutter),
+                                      ],
+                                    ),
+                              const TextSpan(text: "    "),
+                              const TextSpan(text: "color"),
+                              const TextSpan(text: ": ", style: codeClutter),
+                              const TextSpan(text: "Color", style: codeObject),
+                              const TextSpan(text: ".", style: codeClutter),
+                              const TextSpan(
+                                  text: "fromRGBO", style: codeMethod),
+                              const TextSpan(text: "(", style: codeClutter),
+                              for (int i = 0; i < 3; i++)
+                                const TextSpan(children: [
+                                  TextSpan(text: "0"),
+                                  TextSpan(text: ", ", style: codeClutter),
+                                ]),
+                              TextSpan(
+                                text: shadow.color.opacity.humanReadable,
+                                style: TextStyle(color: colors.link),
+                              ),
+                              const TextSpan(text: "),\n", style: codeClutter),
+                              const TextSpan(text: "    "),
+                              const TextSpan(text: "blurRadius"),
+                              const TextSpan(text: ": ", style: codeClutter),
+                              TextSpan(
+                                text: shadow.blurRadius.humanReadable,
+                                style: TextStyle(color: colors.link),
+                              ),
+                              const TextSpan(text: ",\n", style: codeClutter),
+                              shadow.spreadRadius == 0
+                                  ? const TextSpan()
+                                  : TextSpan(children: [
+                                      const TextSpan(text: "    "),
+                                      const TextSpan(text: "spreadRadius"),
+                                      const TextSpan(
+                                          text: ": ", style: codeClutter),
+                                      TextSpan(
+                                        text: shadow.spreadRadius.humanReadable,
+                                        style: TextStyle(color: colors.link),
+                                      ),
+                                      const TextSpan(
+                                          text: ",\n", style: codeClutter),
+                                    ]),
+                              const TextSpan(
+                                  text: "  ),\n", style: codeClutter),
+                            ],
+                          ),
+                        const TextSpan(text: "]", style: codeClutter),
                       ],
                     ),
                   ),
