@@ -89,10 +89,11 @@ class MainApp extends HookWidget {
               0,
               0,
               0,
-              transparencyCurve.value.transform(reverseAlpha.value
-                      ? (1 - (i - 1) / layers.value)
-                      : progress) *
-                  finalTransparency.value,
+              (transparencyCurve.value.transform(reverseAlpha.value
+                          ? (1 - (i - 1) / layers.value)
+                          : progress) *
+                      finalTransparency.value)
+                  .clamp(0, 1),
             ),
             blurRadius: blurCurve.value.transform(progress) * finalBlur.value,
             spreadRadius: spread.value.toDouble(),
@@ -231,12 +232,13 @@ class MainApp extends HookWidget {
                                             0,
                                             0,
                                             0,
-                                            transparencyCurve.value.transform(
-                                                reverseAlpha.value
-                                                    ? (1 -
-                                                        ((i - 1) /
-                                                            layers.value))
-                                                    : (i / layers.value)),
+                                            (transparencyCurve.value.transform(
+                                                    reverseAlpha.value
+                                                        ? (1 -
+                                                            ((i - 1) /
+                                                                layers.value))
+                                                        : (i / layers.value)))
+                                                .clamp(0, 1),
                                           ),
                                         ),
                                         child: const SizedBox.expand(),
