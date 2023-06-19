@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart' as material;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:smooth_shadow/controls/checkbox.dart';
 import 'package:smooth_shadow/controls/controls.dart';
+import 'package:smooth_shadow/controls/curve.dart';
 import 'package:smooth_shadow/controls/slider.dart';
 import 'package:smooth_shadow/extensions.dart';
 import 'package:smooth_shadow/link.dart';
@@ -17,6 +20,7 @@ const colors = (
   surface: Color.fromARGB(255, 223, 230, 238),
   surfaceText: Color.fromARGB(255, 49, 63, 78),
   light: Color.fromARGB(255, 210, 220, 233),
+  accent: Color.fromARGB(255, 241, 40, 160),
   white: Color(0xFFFFFFFF),
 );
 
@@ -38,7 +42,7 @@ class WirsingApp extends StatelessWidget {
             locale: const Locale('en', 'US'),
             delegates: const [
               DefaultWidgetsLocalizations.delegate,
-              DefaultMaterialLocalizations.delegate
+              material.DefaultMaterialLocalizations.delegate
             ],
             child: Overlay(
               initialEntries: [
@@ -67,6 +71,7 @@ class MainApp extends HookWidget {
   Widget build(BuildContext context) {
     final layers = useState(6);
     final finalTransparency = useState(0.07);
+    final transparencyCurve = useState(const Cubic(0.1, 0.5, 0.9, 0.5));
     final reverseAlpha = useState(false);
     final finalOffset = useState(const Offset(100, 100));
     final finalBlur = useState(80);
@@ -79,12 +84,14 @@ class MainApp extends HookWidget {
           return BoxShadow(
             offset: finalOffset.value.scale(progress, progress),
             color: Color.fromRGBO(
-                0,
-                0,
-                0,
-                reverseAlpha.value
-                    ? (1 - progress) * finalTransparency.value
-                    : progress * finalTransparency.value),
+              0,
+              0,
+              0,
+              transparencyCurve.value.transform(reverseAlpha.value
+                      ? (1 - (i - 1) / layers.value)
+                      : progress) *
+                  finalTransparency.value,
+            ),
             blurRadius: progress * finalBlur.value,
             spreadRadius: spread.value.toDouble(),
           );
@@ -116,7 +123,7 @@ class MainApp extends HookWidget {
                 height: 400,
                 child: Padding(
                   padding: const EdgeInsets.all(40),
-                  child: SelectableText.rich(
+                  child: material.SelectableText.rich(
                     style: GoogleFonts.sourceCodePro(
                       fontWeight: FontWeight.w500,
                       fontSize: 14.0,
@@ -202,28 +209,56 @@ class MainApp extends HookWidget {
                         onChanged: (value) => finalTransparency.value = value,
                       ),
                     ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.white,
+                      ),
+                      child: SizedBox(
+                        height: 100,
+                        child: Stack(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(5),
+                              child: Row(
+                                children: [
+                                  for (int i = 1; i <= layers.value; i++)
+                                    Expanded(
+                                      child: DecoratedBox(
+                                        decoration: BoxDecoration(
+                                          color: Color.fromRGBO(
+                                            0,
+                                            0,
+                                            0,
+                                            transparencyCurve.value.transform(
+                                                reverseAlpha.value
+                                                    ? (1 -
+                                                        ((i - 1) /
+                                                            layers.value))
+                                                    : (i / layers.value)),
+                                          ),
+                                        ),
+                                        child: const SizedBox.expand(),
+                                      ),
+                                    )
+                                ],
+                              ),
+                            ),
+                            CurveEditor(
+                              curve: transparencyCurve.value,
+                              onChanged: (value) =>
+                                  transparencyCurve.value = value,
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
                     GestureDetector(
                       onTap: () => reverseAlpha.value = !reverseAlpha.value,
                       child: Wrap(
                         spacing: 5,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          FocusableActionDetector(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: reverseAlpha.value
-                                    ? colors.link
-                                    : colors.white,
-                                borderRadius: BorderRadius.circular(3.0),
-                                border: Border.all(
-                                  color: colors.surfaceText,
-                                ),
-                              ),
-                              child: const SizedBox.square(
-                                dimension: 15,
-                              ),
-                            ),
-                          ),
+                          Checkbox(ticked: reverseAlpha.value),
                           const Text("Reverse alpha")
                         ],
                       ),
