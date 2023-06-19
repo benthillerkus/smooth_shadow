@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart' as material;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -128,11 +130,12 @@ class MainApp extends HookWidget {
                 boxShadow: configuration,
               ),
               child: SizedBox(
-                width: 520,
-                height: 400,
+                width: 500,
+                height: 600,
                 child: Padding(
                   padding: const EdgeInsets.all(40),
                   child: material.SelectableText.rich(
+                    showCursor: true,
                     style: GoogleFonts.sourceCodePro(
                       fontWeight: FontWeight.w500,
                       fontSize: 14.0,
