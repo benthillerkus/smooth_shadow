@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+// ignore: depend_on_referenced_packages
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:smooth_shadow/main.dart';
 

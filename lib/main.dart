@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart' as material;
 import 'package:flutter/widgets.dart';
+// ignore: depend_on_referenced_packages
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:smooth_shadow/configuration.dart';
 import 'package:smooth_shadow/controls/checkbox.dart';
 import 'package:smooth_shadow/controls/controls.dart';
 import 'package:smooth_shadow/controls/curve.dart';
@@ -10,7 +13,11 @@ import 'package:smooth_shadow/extensions.dart';
 import 'package:smooth_shadow/link.dart';
 
 void main() {
-  runApp(const WirsingApp(child: MainApp()));
+  runApp(const ProviderScope(
+    child: WirsingApp(
+      child: MainApp(),
+    ),
+  ));
 }
 
 const colors = (
@@ -70,42 +77,13 @@ class WirsingApp extends StatelessWidget {
   }
 }
 
-class MainApp extends HookWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final layers = useState(6);
-    final finalTransparency = useState(0.07);
-    final transparencyCurve = useState(const Cubic(0.1, 0.5, 0.9, 0.5));
-    final reverseAlpha = useState(false);
-    final finalOffset = useState(const Offset(100, 100));
-    final distanceCurve = useState(const Cubic(0.7, 0.1, 0.9, 0.3));
-    final finalBlur = useState(80);
-    final blurCurve = useState(const Cubic(0.7, 0.1, 0.9, 0.3));
-    final spread = useState(0);
-
-    final configuration = [
-      for (int i = 1; i <= layers.value; i++)
-        () {
-          final progress = layers.value == 0 ? 1.0 : i / layers.value;
-          return BoxShadow(
-            offset: finalOffset.value * distanceCurve.value.transform(progress),
-            color: Color.fromRGBO(
-              0,
-              0,
-              0,
-              (transparencyCurve.value.transform(reverseAlpha.value
-                          ? (1 - (i - 1) / layers.value)
-                          : progress) *
-                      finalTransparency.value)
-                  .clamp(0, 1),
-            ),
-            blurRadius: blurCurve.value.transform(progress) * finalBlur.value,
-            spreadRadius: spread.value.toDouble(),
-          );
-        }()
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final configuration = ref.watch(configurationProvider);
+    final shadows = ref.watch(shadowProvider);
 
     return Stack(
       children: [
@@ -125,7 +103,7 @@ class MainApp extends HookWidget {
               decoration: BoxDecoration(
                 color: colors.white,
                 borderRadius: BorderRadius.circular(6.0),
-                boxShadow: configuration,
+                boxShadow: shadows,
               ),
               child: SizedBox(
                 width: 500,
@@ -147,7 +125,7 @@ class MainApp extends HookWidget {
                         const TextSpan(text: " <", style: codeClutter),
                         const TextSpan(text: "BoxShadow", style: codeObject),
                         const TextSpan(text: ">[\n", style: codeClutter),
-                        for (final shadow in configuration)
+                        for (final shadow in shadows)
                           TextSpan(
                             children: [
                               const TextSpan(text: "  "),
@@ -272,9 +250,11 @@ class MainApp extends HookWidget {
                     child: LabeledSlider(
                       label: "Layers of shadows",
                       state: Discrete(
-                        layers.value,
+                        configuration.layerCount,
                         max: 10,
-                        onChanged: (value) => layers.value = value,
+                        onChanged: (value) => ref
+                            .read(configurationProvider.notifier)
+                            .state = configuration.copyWith(layerCount: value),
                       ),
                     ),
                   ),
@@ -283,8 +263,10 @@ class MainApp extends HookWidget {
                       label: "Final transparency",
                       unit: "%",
                       state: Continuous(
-                        finalTransparency.value,
-                        onChanged: (value) => finalTransparency.value = value,
+                        configuration.maxOpacity,
+                        onChanged: (value) => ref
+                            .read(configurationProvider.notifier)
+                            .state = configuration.copyWith(maxOpacity: value),
                       ),
                     ),
                     DecoratedBox(
@@ -299,7 +281,9 @@ class MainApp extends HookWidget {
                               padding: const EdgeInsets.all(5),
                               child: Row(
                                 children: [
-                                  for (int i = 1; i <= layers.value; i++)
+                                  for (int i = 1;
+                                      i <= configuration.layerCount;
+                                      i++)
                                     Expanded(
                                       child: DecoratedBox(
                                         decoration: BoxDecoration(
@@ -307,12 +291,17 @@ class MainApp extends HookWidget {
                                             0,
                                             0,
                                             0,
-                                            (transparencyCurve.value.transform(
-                                                    reverseAlpha.value
+                                            (configuration
+                                                    .transparencyDistribution
+                                                    .transform(configuration
+                                                            .reverseOpacity
                                                         ? (1 -
                                                             ((i - 1) /
-                                                                layers.value))
-                                                        : (i / layers.value)))
+                                                                configuration
+                                                                    .layerCount))
+                                                        : (i /
+                                                            configuration
+                                                                .layerCount)))
                                                 .clamp(0, 1),
                                           ),
                                         ),
@@ -323,21 +312,28 @@ class MainApp extends HookWidget {
                               ),
                             ),
                             CurveEditor(
-                              curve: transparencyCurve.value,
-                              onChanged: (value) =>
-                                  transparencyCurve.value = value,
+                              curve: configuration.transparencyDistribution,
+                              onChanged: (value) => ref
+                                      .read(configurationProvider.notifier)
+                                      .state =
+                                  configuration.copyWith(
+                                      transparencyDistribution: value),
                             )
                           ],
                         ),
                       ),
                     ),
                     GestureDetector(
-                      onTap: () => reverseAlpha.value = !reverseAlpha.value,
+                      onTap: () => ref
+                              .read(configurationProvider.notifier)
+                              .state =
+                          configuration.copyWith(
+                              reverseOpacity: !configuration.reverseOpacity),
                       child: Wrap(
                         spacing: 5,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          Checkbox(ticked: reverseAlpha.value),
+                          Checkbox(ticked: configuration.reverseOpacity),
                           const Text("Reverse alpha")
                         ],
                       ),
@@ -348,20 +344,30 @@ class MainApp extends HookWidget {
                       label: "Final horizontal distance",
                       unit: "px",
                       state: Continuous(
-                        finalOffset.value.dx,
+                        configuration.maxDistance.dx,
                         max: 500,
-                        onChanged: (value) => finalOffset.value =
-                            Offset(value, finalOffset.value.dy),
+                        onChanged: (value) =>
+                            ref.read(configurationProvider.notifier).state =
+                                configuration.copyWith(
+                                    maxDistance: Offset(
+                                        value,
+                                        configuration.maxDistance.dy
+                                            .clamp(0, 500))),
                       ),
                     ),
                     LabeledSlider(
                       label: "Final vertical distance",
                       unit: "px",
                       state: Continuous(
-                        finalOffset.value.dy,
+                        configuration.maxDistance.dy,
                         max: 500,
-                        onChanged: (value) => finalOffset.value =
-                            Offset(finalOffset.value.dx, value),
+                        onChanged: (value) => ref
+                                .read(configurationProvider.notifier)
+                                .state =
+                            configuration.copyWith(
+                                maxDistance: Offset(
+                                    configuration.maxDistance.dx.clamp(0, 500),
+                                    value)),
                       ),
                     ),
                     DecoratedBox(
@@ -377,10 +383,14 @@ class MainApp extends HookWidget {
                                   vertical: 5, horizontal: 3),
                               child: Row(
                                 children: [
-                                  for (int i = 1; i <= layers.value; i++)
+                                  for (int i = 1;
+                                      i <= configuration.layerCount;
+                                      i++)
                                     Expanded(
-                                      flex: (distanceCurve.value
-                                                  .transform(i / layers.value) *
+                                      flex: (configuration.distanceDistribution
+                                                  .transform(i /
+                                                      configuration
+                                                          .layerCount) *
                                               1000)
                                           .toInt(),
                                       child: Padding(
@@ -400,8 +410,12 @@ class MainApp extends HookWidget {
                               ),
                             ),
                             CurveEditor(
-                              curve: distanceCurve.value,
-                              onChanged: (value) => distanceCurve.value = value,
+                              curve: configuration.distanceDistribution,
+                              onChanged: (value) => ref
+                                      .read(configurationProvider.notifier)
+                                      .state =
+                                  configuration.copyWith(
+                                      distanceDistribution: value),
                             )
                           ],
                         ),
@@ -413,9 +427,11 @@ class MainApp extends HookWidget {
                       label: "Final blur strength",
                       unit: "px",
                       state: Discrete(
-                        finalBlur.value,
+                        configuration.maxBlur,
                         max: 500,
-                        onChanged: (value) => finalBlur.value = value,
+                        onChanged: (value) => ref
+                            .read(configurationProvider.notifier)
+                            .state = configuration.copyWith(maxBlur: value),
                       ),
                     ),
                     DecoratedBox(
@@ -433,7 +449,9 @@ class MainApp extends HookWidget {
                                   builder: (context, constraints) {
                                 return Row(
                                   children: [
-                                    for (int i = 1; i <= layers.value; i++)
+                                    for (int i = 1;
+                                        i <= configuration.layerCount;
+                                        i++)
                                       Expanded(
                                         child: Padding(
                                           padding: const EdgeInsets.symmetric(
@@ -443,8 +461,11 @@ class MainApp extends HookWidget {
                                               color: colors.light,
                                             ),
                                             child: SizedBox(
-                                              height: blurCurve.value.transform(
-                                                      i / layers.value) *
+                                              height: configuration
+                                                      .blurDistribution
+                                                      .transform(i /
+                                                          configuration
+                                                              .layerCount) *
                                                   constraints.maxHeight,
                                             ),
                                           ),
@@ -455,8 +476,12 @@ class MainApp extends HookWidget {
                               }),
                             ),
                             CurveEditor(
-                              curve: blurCurve.value,
-                              onChanged: (value) => blurCurve.value = value,
+                              curve: configuration.blurDistribution,
+                              onChanged: (value) => ref
+                                      .read(configurationProvider.notifier)
+                                      .state =
+                                  configuration.copyWith(
+                                      blurDistribution: value),
                             )
                           ],
                         ),
@@ -468,10 +493,12 @@ class MainApp extends HookWidget {
                       label: "Reduce spread",
                       unit: "px",
                       state: Discrete(
-                        spread.value,
+                        configuration.spread,
                         max: 0,
                         min: -100,
-                        onChanged: (value) => spread.value = value,
+                        onChanged: (value) => ref
+                            .read(configurationProvider.notifier)
+                            .state = configuration.copyWith(spread: value),
                       ),
                     ),
                   )
