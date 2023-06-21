@@ -31,7 +31,7 @@ class Configuration with ConfigurationMappable {
 
 final configurationProvider = StateProvider((_) => const Configuration());
 
-final shadowProvider = Provider((ref) {
+final shadowsProvider = Provider((ref) {
   final configuration = ref.watch(configurationProvider);
   return List.generate(configuration.layerCount, growable: false, (index) {
     final progress = configuration.layerCount == 0
