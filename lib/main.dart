@@ -3,11 +3,15 @@ import 'package:flutter/widgets.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_shadow/codebox.dart';
+import 'package:smooth_shadow/configuration.dart';
 import 'package:smooth_shadow/control_list.dart';
 import 'package:smooth_shadow/extensions.dart';
 import 'package:smooth_shadow/link.dart';
+import 'no_web_features.dart' if (dart.library.html) 'web_features.dart';
 
 void main() {
+  usePathUrlStrategy();
+
   runApp(const ProviderScope(
     child: WirsingApp(
       child: MainApp(),
@@ -73,11 +77,15 @@ class WirsingApp extends ConsumerWidget {
   }
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(configurationProvider, (previous, next) {
+      if (previous != next) updatePath(next);
+    });
+
     return Stack(
       children: [
         Align(

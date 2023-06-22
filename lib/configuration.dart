@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/widgets.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:dart_mappable/dart_mappable.dart';
+import 'no_web_features.dart' if (dart.library.html) 'web_features.dart';
 
 part 'configuration.mapper.dart';
 
@@ -31,7 +32,7 @@ class Configuration with ConfigurationMappable {
   });
 }
 
-final configurationProvider = StateProvider((_) => const Configuration());
+final configurationProvider = StateProvider((_) => getConfigurationFromPath());
 
 final shadowsProvider = Provider((ref) {
   final configuration = ref.watch(configurationProvider);
