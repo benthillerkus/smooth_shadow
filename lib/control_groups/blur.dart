@@ -72,9 +72,10 @@ class _BlurDistribution extends ConsumerWidget {
                               color: colors.light,
                             ),
                             child: SizedBox(
-                              height:
-                                  blurDistribution.transform(i / layerCount) *
-                                      constraints.maxHeight,
+                              height: blurDistribution
+                                      .transform(i / layerCount)
+                                      .clamp(0, 1) *
+                                  constraints.maxHeight,
                             ),
                           ),
                         ),

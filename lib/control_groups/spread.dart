@@ -21,7 +21,7 @@ class SpreadControlGroup extends ConsumerWidget {
             min: -100,
             onChanged: (value) => ref
                 .read(configurationProvider.notifier)
-                .update((state) => state.copyWith(spread: value))),
+                .update((state) => state.copyWith(spread: value),),),
       ),
     );
   }

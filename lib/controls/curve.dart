@@ -3,7 +3,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:smooth_shadow/main.dart';
 
-class CurveEditor extends StatelessWidget {
+enum _GrabState {
+  none,
+  handle1,
+  handle2,
+}
+
+class CurveEditor extends HookWidget {
   const CurveEditor({
     super.key,
     required this.curve,
@@ -15,100 +21,108 @@ class CurveEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _CurvePainter(curve),
-      child: LayoutBuilder(builder: (context, constraints) {
-        final handle1 = Offset(curve.a, 1 - curve.b).scale(
-          constraints.maxWidth,
-          constraints.maxHeight,
-        );
-        final handle2 = Offset(curve.c, 1 - curve.d).scale(
-          constraints.maxWidth,
-          constraints.maxHeight,
-        );
+    final grabState = useRef(_GrabState.none);
 
-        return HookBuilder(builder: (context) {
-          final controller = useMemoized(OverlayPortalController.new);
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            controller.show();
-          });
-          return OverlayPortal(
-            controller: controller,
-            overlayChildBuilder: (_) {
-              final box = context.findRenderObject();
-              if (box == null) return const SizedBox.shrink();
-              return LayoutBuilder(builder: (context, _) {
-                Offset position = (box as RenderBox).localToGlobal(Offset.zero);
-                return Stack(
-                  children: [
-                    Positioned(
-                      left: handle1.dx - 8 + position.dx,
-                      top: handle1.dy - 8 + position.dy,
-                      child: Listener(
-                        onPointerMove: (details) {
-                          final point = (details.position - position).scale(
-                            1 / constraints.maxWidth,
-                            1 / constraints.maxHeight,
-                          );
-                          onChanged(
-                              Cubic(point.dx, 1 - point.dy, curve.c, curve.d));
-                        },
-                        child: FocusableActionDetector(
-                          mouseCursor: SystemMouseCursors.click,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: colors.accent,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const SizedBox.square(
-                              dimension: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: handle2.dx - 8 + position.dx,
-                      top: handle2.dy - 8 + position.dy,
-                      child: Listener(
-                        onPointerMove: (details) {
-                          final point = (details.position - position).scale(
-                            1 / constraints.maxWidth,
-                            1 / constraints.maxHeight,
-                          );
-                          onChanged(
-                              Cubic(curve.a, curve.b, point.dx, 1 - point.dy));
-                        },
-                        child: FocusableActionDetector(
-                          mouseCursor: SystemMouseCursors.click,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: colors.accent,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const SizedBox.square(
-                              dimension: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              });
-            },
-            child: const SizedBox.expand(),
+    return CustomPaint(
+      painter: _CurvePainter(curve, resolution: 128),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final handle1 = Offset(curve.a, 1 - curve.b).scale(
+            constraints.maxWidth,
+            constraints.maxHeight,
           );
-        });
-      }),
+          final handle2 = Offset(curve.c, 1 - curve.d).scale(
+            constraints.maxWidth,
+            constraints.maxHeight,
+          );
+          return Listener(
+            onPointerDown: (details) {
+              if ((details.localPosition - handle1).distance < 8) {
+                grabState.value = _GrabState.handle1;
+              } else if ((details.localPosition - handle2).distance < 8) {
+                grabState.value = _GrabState.handle2;
+              } else {
+                grabState.value = _GrabState.none;
+              }
+            },
+            onPointerMove: (details) {
+              final point = (details.localPosition).scale(
+                1 / constraints.maxWidth,
+                1 / constraints.maxHeight,
+              );
+              switch (grabState.value) {
+                case _GrabState.handle1:
+                  onChanged(
+                    Cubic(
+                      point.dx.clamp(0, 1),
+                      1 - point.dy.clamp(0, 1),
+                      curve.c,
+                      curve.d,
+                    ),
+                  );
+                case _GrabState.handle2:
+                  onChanged(
+                    Cubic(
+                      curve.a,
+                      curve.b,
+                      point.dx.clamp(0, 1),
+                      1 - point.dy.clamp(0, 1),
+                    ),
+                  );
+                case _GrabState.none:
+              }
+            },
+            onPointerUp: (details) => grabState.value = _GrabState.none,
+            onPointerCancel: (details) => grabState.value = _GrabState.none,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: handle1.dx - 8,
+                  top: handle1.dy - 8,
+                  child: FocusableActionDetector(
+                    mouseCursor: SystemMouseCursors.click,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.accent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const SizedBox.square(
+                        dimension: 16,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: handle2.dx - 8,
+                  top: handle2.dy - 8,
+                  child: FocusableActionDetector(
+                    mouseCursor: SystemMouseCursors.click,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: colors.accent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const SizedBox.square(
+                        dimension: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
 class _CurvePainter extends CustomPainter {
   final Cubic curve;
+  final int resolution;
 
-  _CurvePainter(this.curve);
+  _CurvePainter(this.curve, {this.resolution = 64});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -126,9 +140,9 @@ class _CurvePainter extends CustomPainter {
     paint.strokeWidth = 4;
     final path = Path()..moveTo(0, size.height);
 
-    for (var x = 0; x <= 64; x++) {
-      final y = curve.transform(x / 64);
-      path.lineTo(x / 64 * size.width, size.height - y * size.height);
+    for (var x = 0; x <= resolution; x++) {
+      final y = curve.transform(x / resolution);
+      path.lineTo(x / resolution * size.width, size.height - y * size.height);
     }
 
     canvas.drawPath(path, paint);
@@ -138,5 +152,6 @@ class _CurvePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CurvePainter oldDelegate) => oldDelegate.curve != curve;
+  bool shouldRepaint(_CurvePainter oldDelegate) =>
+      oldDelegate.curve != curve || oldDelegate.resolution != resolution;
 }

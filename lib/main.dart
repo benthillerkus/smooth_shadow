@@ -32,42 +32,43 @@ const codeMethod =
     TextStyle(color: material.Color.fromARGB(255, 139, 163, 146));
 const codeClutter = TextStyle(color: material.Color.fromARGB(45, 0, 0, 0));
 
-class WirsingApp extends StatelessWidget {
+class WirsingApp extends ConsumerWidget {
   const WirsingApp({super.key, required this.child});
 
   final Widget child;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Directionality(
       textDirection: TextDirection.ltr,
       child: DefaultTextStyle(
-          style: GoogleFonts.inter(
-            color: colors.text,
-            fontSize: 12.0,
-          ),
-          child: Localizations(
-            locale: const Locale('en', 'US'),
-            delegates: const [
-              DefaultWidgetsLocalizations.delegate,
-              material.DefaultMaterialLocalizations.delegate
-            ],
-            child: Overlay(
-              initialEntries: [
-                OverlayEntry(
-                  builder: (context) => DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: colors.background,
-                    ),
-                    child: const Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: MainApp(),
-                    ),
+        style: GoogleFonts.inter(
+          color: colors.text,
+          fontSize: 12.0,
+        ),
+        child: Localizations(
+          locale: const Locale('en', 'US'),
+          delegates: const [
+            DefaultWidgetsLocalizations.delegate,
+            material.DefaultMaterialLocalizations.delegate
+          ],
+          child: Overlay(
+            initialEntries: [
+              OverlayEntry(
+                builder: (context) => DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colors.background,
+                  ),
+                  child: const Padding(
+                    padding: EdgeInsets.all(20.0),
+                    child: MainApp(),
                   ),
                 ),
-              ],
-            ),
-          )),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -79,21 +80,6 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        LayoutBuilder(builder: (context, constraints) {
-          return AnimatedAlign(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            alignment: Alignment(
-                constraints.biggest.width.map(
-                  inMin: 800,
-                  inMax: 1900,
-                  outMin: -1,
-                  outMax: 0,
-                ),
-                0),
-            child: const Codebox(),
-          );
-        }),
         Align(
           alignment: Alignment.topLeft,
           child: Wrap(
@@ -122,6 +108,21 @@ class MainApp extends StatelessWidget {
             ],
           ),
         ),
+        LayoutBuilder(builder: (context, constraints) {
+          return AnimatedAlign(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            alignment: Alignment(
+                constraints.biggest.width.map(
+                  inMin: 800,
+                  inMax: 1900,
+                  outMin: -1,
+                  outMax: 0,
+                ),
+                0),
+            child: const Codebox(),
+          );
+        }),
         const Align(
           alignment: Alignment.topRight,
           child: SizedBox(

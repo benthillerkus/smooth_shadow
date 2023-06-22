@@ -85,7 +85,9 @@ class _DistanceDistribution extends ConsumerWidget {
                 children: [
                   for (int i = 1; i <= layerCount; i++)
                     Expanded(
-                      flex: (distanceDistribution.transform(i / layerCount) *
+                      flex: (distanceDistribution
+                                  .transform(i / layerCount)
+                                  .clamp(0.001, 1) *
                               1000)
                           .toInt(),
                       child: Padding(

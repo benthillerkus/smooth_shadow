@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/widgets.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:dart_mappable/dart_mappable.dart';
@@ -51,7 +53,7 @@ final shadowsProvider = Provider((ref) {
                 configuration.maxOpacity)
             .clamp(0, 1),
       ),
-      blurRadius: configuration.blurDistribution.transform(progress) *
+      blurRadius: max(0.0, configuration.blurDistribution.transform(progress)) *
           configuration.maxBlur,
       spreadRadius: configuration.spread.toDouble(),
     );
